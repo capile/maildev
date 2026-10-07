@@ -108,18 +108,30 @@ export class APIServer extends EventEmitter {
     // FastifyInstance either way.
     this.app = Fastify(fastifyOptions as unknown as FastifyServerOptions) as unknown as FastifyInstance
 
-    this.app.addHook('onSend', async (request, reply, payload) => {
-        reply
-            .header('Cache-Control', "private, no-cache, no-store, must-revalidate, max-age=0, s-maxage=0")
-            .header("X-Frame-Options", "SAMEORIGIN")
-            .header("X-XSS-Protection", "1; mode=block")
-            .header("X-Content-Type-Options", "nosniff")
-            .header("Referrer-Policy", "origin-when-cross-origin")
-            .header("Permissions-Policy", 'microphone=(), camera=(), autoplay=(self "https://*.first.org")')
-            .header("Access-Control-Allow-Origin", "null")
-            .header("Content-Security-Policy", "default-src 'self' data: gap: ws: *.first.org 'unsafe-inline' 'unsafe-eval';")
-        return payload
-    })
+    this.app.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
+        if (request.method === 'GET' && request.url.match(/^\/(config$|assets\/)/)) {
+            reply
+                .header('X-Content-Type-Options', 'nosniff')
+                .header('X-Frame-Options', 'DENY')
+                .header('Referrer-Policy', 'strict-origin-when-cross-origin')
+                .header('Cache-Control', 'public, max-age=300')
+                .removeHeader('Server')
+                .removeHeader('X-Powered-By');
+        } else {
+            reply
+                .header('Cache-Control', "private, no-cache, no-store, must-revalidate, max-age=0, s-maxage=0")
+                .header("X-Frame-Options", "SAMEORIGIN")
+                .header("X-XSS-Protection", "1; mode=block")
+                .header("X-Content-Type-Options", "nosniff")
+                .header("Referrer-Policy", "origin-when-cross-origin")
+                .header("Permissions-Policy", 'microphone=(), camera=(), autoplay=(self "https://*.first.org")')
+                .header("Access-Control-Allow-Origin", "null")
+                .header("Content-Security-Policy", "default-src 'self' data: gap: ws: *.first.org 'unsafe-inline' 'unsafe-eval';")
+                .header('X-Robots-Tag', 'noindex, nofollow, nosnippet, noarchive')
+                .removeHeader('Server')
+                .removeHeader('X-Powered-By')
+        }
+    });
   }
 
   /**
