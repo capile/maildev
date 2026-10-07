@@ -107,6 +107,19 @@ export class APIServer extends EventEmitter {
     // Fastify's instance type differs for HTTPS; we hold it as the common
     // FastifyInstance either way.
     this.app = Fastify(fastifyOptions as unknown as FastifyServerOptions) as unknown as FastifyInstance
+
+    this.app.addHook('onSend', async (request, reply, payload) => {
+        reply
+            .header('Cache-Control', "private, no-cache, no-store, must-revalidate, max-age=0, s-maxage=0")
+            .header("X-Frame-Options", "SAMEORIGIN")
+            .header("X-XSS-Protection", "1; mode=block")
+            .header("X-Content-Type-Options", "nosniff")
+            .header("Referrer-Policy", "origin-when-cross-origin")
+            .header("Permissions-Policy", 'microphone=(), camera=(), autoplay=(self "https://*.first.org")')
+            .header("Access-Control-Allow-Origin", "null")
+            .header("Content-Security-Policy", "default-src 'self' data: gap: ws: *.first.org 'unsafe-inline' 'unsafe-eval';")
+        return payload
+    })
   }
 
   /**
