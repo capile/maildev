@@ -109,7 +109,9 @@ export class APIServer extends EventEmitter {
     this.app = Fastify(fastifyOptions as unknown as FastifyServerOptions) as unknown as FastifyInstance
 
     this.app.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
-        if (request.method === 'GET' && request.url.match(/^\/(config$|assets\/)/)) {
+        if (request.url.match(/^\/(socket\.io\/)/)) {
+            return;
+        } else if (request.method === 'GET' && request.url.match(/^\/(config$|assets\/)/)) {
             reply
                 .header('X-Content-Type-Options', 'nosniff')
                 .header('X-Frame-Options', 'DENY')
@@ -125,8 +127,8 @@ export class APIServer extends EventEmitter {
                 .header("X-Content-Type-Options", "nosniff")
                 .header("Referrer-Policy", "origin-when-cross-origin")
                 .header("Permissions-Policy", 'microphone=(), camera=(), autoplay=(self "https://*.first.org")')
-                .header("Access-Control-Allow-Origin", "null")
-                .header("Content-Security-Policy", "default-src 'self' data: gap: ws: *.first.org 'unsafe-inline' 'unsafe-eval';")
+                // .header("Access-Control-Allow-Origin", "*")
+                .header("Content-Security-Policy", "default-src 'self' data: gap: ws: wss: *.first.org 'unsafe-inline' 'unsafe-eval';")
                 .header('X-Robots-Tag', 'noindex, nofollow, nosnippet, noarchive')
                 .removeHeader('Server')
                 .removeHeader('X-Powered-By')
